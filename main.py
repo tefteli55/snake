@@ -1,4 +1,6 @@
 from pygame import *
+from random import choice
+from random import randint
 
 window = display.set_mode((700,500))
 display.set_caption('Длинная штука')
@@ -17,7 +19,7 @@ class Snake(GameSprite):
     def __init__(self, img, x, y, w, h, t):
         super().__init__(img, x, y, w, h)
         self.type = t
-        self.speed = 1
+        self.speed = 25
         self.direction = "0"
         self.cur_image = self.image
 
@@ -45,13 +47,52 @@ class Snake(GameSprite):
             self.direction = 'd'
             self.image = transform.rotate(self.cur_image, 0)
 
-head = Snake('golova.png', 350, 250, 25, 25, 0)
+    def set_direct(self):
+        if self.direction == 'l':
+            self.image = transform.rotate(self.cur_image, -90)
+        elif self.direction == 'r':
+            self.image = transform.rotate(self.cur_image, 90)
+        elif self.direction == 'u':
+            self.image = transform.rotate(self.cur_image, 180)
+        elif self.direction == 'd':
+            self.image = transform.rotate(self.cur_image, 0)
 
 
+    def eat(self, food):
+        global speed
+        speed +=1
+        food.position()
+
+class Food(GameSprite):
+    def __init__(self, imgs, x, y, w, h):
+        super().__init__(imgs[0], x,y,w,h)
+        self.costumes = []
+        self.costumes.append(self.image)
+        for i in range(len(imgs)-1):
+            self.image = transform.scale(image.load(imgs[i+1]), (w,h))
+            self.costumes.append(self.image)
+
+    def set_costume(self, n):
+        self.image = self.costumes[n]
+
+    def rand_costume(self):
+        self.images = choice(self.costumes)
+
+    def position(self):
+        self.rect.x = randint(0, 700-self.rect.width)
+        self.rect.y = randint(0, 500-self.rect.height)
+        self.rand_costume()
+
+head = Snake('golova.png', 350, 250, 25, 25, 5)
+tail = Snake('xvost.png', 350, 225, 25, 25, 5)
+snake = [head, tail]
+food = Food(['abloko.png', 'bonan.png', 'mango.png', 'ogyrez.png'], -100, -100, 25, 25)
+food.position()
 
 game = True
 clock = time.Clock()
-FPS = 100
+FPS = 10
+speed = 1
 
 while game:
     for e in event.get():
@@ -61,6 +102,16 @@ while game:
     window.fill((200,200,200))
     head.update()
     head.reset()
+    food.reset()
+    if head.rect.colliderect(food):
+        head.eat(food)
+
+    for e in range(1, len(snake)):
+        snake[e].reset()
+        snake[e].direction = snake[e-1].direction
+        snake[e].rect.x = snake[e-1].rect.x
+        snake[e].rect.y = snake[e-1].rect.y
+        snake[e].set_direct()
 
     clock.tick(FPS)
     display.update()
