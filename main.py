@@ -79,9 +79,12 @@ class Food(GameSprite):
         self.images = choice(self.costumes)
 
     def position(self):
-        self.rect.x = randint(0, 700-self.rect.width)
-        self.rect.y = randint(0, 500-self.rect.height)
+        self.rect.x = int(randint(0, 700-self.rect.width)/25)*25
+        self.rect.y = int(randint(0, 500-self.rect.height)/25)*25
         self.rand_costume()
+
+font.init()
+font1 = font.Sysfont('Arial', 36)
 
 head = Snake('golova.png', 350, 250, 25, 25, 5)
 tail = Snake('xvost.png', 350, 225, 25, 25, 5)
@@ -91,8 +94,9 @@ food.position()
 
 game = True
 clock = time.Clock()
-FPS = 10
+FPS = 60
 speed = 1
+global_wait = 0
 
 while game:
     for e in event.get():
@@ -100,18 +104,37 @@ while game:
             game = False
 
     window.fill((200,200,200))
-    head.update()
+
+    head.get_direction()
+    if global_wait == 0:
+        global_wait = head.wait
+        for e in range(len(snake), -1, 0, -1):
+            snake[e].reset()
+            snake[e].direction = snake[e-1].direction
+            snake[e].rect.x = snake[e-1].rect.x
+            snake[e].rect.y = snake[e-1].rect.y
+            snake[e].set_direct()
+        head.update()
+
+    else:
+        global_wait -= 1
+
     head.reset()
     food.reset()
+    for s in snake:
+        s.reset()
+
     if head.rect.colliderect(food):
         head.eat(food)
+        s = Snake('telo.png', head.rect.x, head.rect.y, 25, 25, 0)
+        snake.insert(1.s)
+        if speed%5 == 0:
+            head.wait -= 2
+        if head.wait <10:
+            head.wait = 0
 
-    for e in range(1, len(snake)):
-        snake[e].reset()
-        snake[e].direction = snake[e-1].direction
-        snake[e].rect.x = snake[e-1].rect.x
-        snake[e].rect.y = snake[e-1].rect.y
-        snake[e].set_direct()
+    score_text = font1.render('Счёт: ', +str, (speed-1), 1, (0,0,0))
+    window.blit(score_text, (10,10))
 
     clock.tick(FPS)
     display.update()
